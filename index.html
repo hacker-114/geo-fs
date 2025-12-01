@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Game Runner</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    /* same styling as before */
+    body { margin:0; font-family:system-ui,sans-serif; background:#0b0f14; color:#cfe3ff; }
+    #canvas { width:100%; height:100%; display:block; }
+    #log { font-family:ui-monospace,monospace; font-size:12px; white-space:pre-wrap; }
+  </style>
+</head>
+<body>
+  <header>
+    <strong>Game Runner</strong>
+    <button id="initBtn">Init</button>
+    <button id="startBtn">Start</button>
+    <button id="pauseBtn">Pause</button>
+    <button id="resetBtn">Reset</button>
+  </header>
+
+  <main>
+    <canvas id="canvas" width="960" height="540"></canvas>
+    <div id="log"></div>
+  </main>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const logEl = document.getElementById('log');
+    let gameAPI = null, rafId=null, started=false, paused=false;
+
+    function log(...args){ logEl.textContent += args.join(' ') + "\n"; console.log(...args); }
+
+    async function loadScript(){
+      try {
+        await import(resolvePath('script.js'))
+          .then(mod => { gameAPI = mod.default || mod.Game || mod.game || mod; });
+        log('Loaded script.js');
+      } catch(e){ log('Error loading script.js', e); }
+    }
+
+    function resolvePath(p){
+      const a=document.createElement('a'); a.href=p; return a.href;
+    }
+
+    function loop(){
+      if(paused) return;
+      if(gameAPI && typeof gameAPI.frame==='function'){
+        try{ gameAPI.frame(ctx, canvas); }catch(e){ log('frame() error', e); cancelAnimationFrame(rafId); return; }
+      }
+      rafId=requestAnimationFrame(loop);
+    }
+
+    async function initGame(){
+      await loadScript();
+      if(gameAPI && typeof gameAPI.init==='function'){ gameAPI.init(ctx, canvas); }
+      log('Init complete');
+    }
+    function startGame(){ if(!gameAPI){return log('Init first');} paused=false; started=true; if(gameAPI.start) gameAPI.start(ctx, canvas); loop(); }
+    function pauseGame(){ paused=true; if(rafId) cancelAnimationFrame(rafId); if(gameAPI.pause) gameAPI.pause(ctx, canvas); log('Paused'); }
+    function resetGame(){ paused=false; started=false; if(rafId) cancelAnimationFrame(rafId); if(gameAPI.reset) gameAPI.reset(ctx, canvas); ctx.clearRect(0,0,canvas.width,canvas.height); log('Reset'); }
+
+    document.getElementById('initBtn').onclick=initGame;
+    document.getElementById('startBtn').onclick=startGame;
+    document.getElementById('pauseBtn').onclick=pauseGame;
+    document.getElementById('resetBtn').onclick=resetGame;
+
+    ctx.fillStyle='#9cc4ff'; ctx.fillText('Ready. Click Init → Start.',16,28);
+  </script>
+</body>
+</html>
