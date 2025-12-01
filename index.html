@@ -1,99 +1,15 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Game Runner</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <style>
-    body {
-      margin: 0;
-      font-family: system-ui, sans-serif;
-      background: #0b0f14;
-      color: #cfe3ff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-    }
-    canvas {
-      border: 1px solid #1b2736;
-      background: #000;
-    }
-    #log {
-      margin-top: 12px;
-      font-family: ui-monospace, monospace;
-      font-size: 12px;
-      white-space: pre-wrap;
-      max-width: 960px;
-      color: #9cc4ff;
-    }
-  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JS Launcher Example</title>
 </head>
 <body>
-  <canvas id="canvas" width="960" height="540"></canvas>
-  <div id="log"></div>
+  <h1>Hello, world!</h1>
+  <p>This page loads <code>script.js</code> using the <code>src</code> attribute.</p>
 
-  <script>
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-    const logEl = document.getElementById('log');
-    let gameAPI = null, rafId = null;
-
-    function log(...args) {
-      const msg = args.map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ');
-      logEl.textContent += msg + '\n';
-      console.log(...args);
-    }
-
-    function resolvePath(p) {
-      const a = document.createElement('a');
-      a.href = p;
-      return a.href;
-    }
-
-    async function loadGame() {
-      try {
-        const mod = await import(resolvePath('script.js'));
-        gameAPI = mod.default || mod.Game || mod.game || mod;
-        log('Loaded script.js');
-
-        if (gameAPI.init) {
-          log('Calling init()');
-          await gameAPI.init(ctx, canvas);
-        }
-
-        if (gameAPI.start) {
-          log('Calling start()');
-          gameAPI.start(ctx, canvas);
-        }
-
-        loop();
-      } catch (e) {
-        log('Error loading or initializing game:', e);
-      }
-    }
-
-    function loop() {
-      if (gameAPI && typeof gameAPI.frame === 'function') {
-        try {
-          gameAPI.frame(ctx, canvas);
-        } catch (e) {
-          log('Error in frame():', e);
-          cancelAnimationFrame(rafId);
-          return;
-        }
-      }
-      rafId = requestAnimationFrame(loop);
-    }
-
-    // Launch game on page load
-    loadGame();
-
-    // Optional: initial message
-    ctx.fillStyle = '#9cc4ff';
-    ctx.font = '16px system-ui';
-    ctx.fillText('Launching game...', 16, 28);
-  </script>
+  <!-- Load external JavaScript file -->
+  <script src="script.js"></script>
 </body>
 </html>
